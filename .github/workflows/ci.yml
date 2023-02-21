@@ -59,6 +59,7 @@ jobs:
         steps:
             # Install Salesforce CLI
             - name: 'Install Salesforce CLI'
+              if: github.actor != 'dependabot[bot]'
               run: |
                   wget https://developer.salesforce.com/media/salesforce-cli/sfdx/channels/stable/sfdx-linux-x64.tar.xz
                   mkdir ~/sfdx
@@ -68,10 +69,12 @@ jobs:
 
             # Checkout the code in the pull request
             - name: 'Checkout source code'
+              if: github.actor != 'dependabot[bot]'
               uses: actions/checkout@v2
 
             # Store secret for dev hub
             - name: 'Populate auth file with DEVHUB_SFDX_URL secret'
+              if: github.actor != 'dependabot[bot]'
               shell: bash
               run: |
                   echo ${{ secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt
@@ -83,35 +86,42 @@ jobs:
 
             # Authenticate dev hub
             - name: 'Authenticate Dev Hub'
+              if: github.actor != 'dependabot[bot]'
               run: 'sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -a devhub -d'
 
             # Create scratch org
             - name: 'Create scratch org'
+              if: github.actor != 'dependabot[bot]'
               run: 'sfdx force:org:create -f config/project-scratch-def.json -a quiz-ci -c -s -d 1'
 
             # Deploy source to scratch org
             - name: 'Push source'
+              if: github.actor != 'dependabot[bot]'
               run: 'sfdx force:source:push'
 
             # Assign permission set
             - name: 'Assign permission set'
+              if: github.actor != 'dependabot[bot]'
               run: 'sfdx force:user:permset:assign -n Quiz_Host'
 
             # Deploy test metadata
             - name: 'Deploy test metadata'
+              if: github.actor != 'dependabot[bot]'
               run: sfdx force:mdapi:deploy -d test-metadata -w 10
 
             # Run Apex tests in scratch org
             - name: 'Run Apex tests'
+              if: github.actor != 'dependabot[bot]'
               run: 'sfdx force:apex:test:run -c -r human -d ./tests/apex -w 20'
 
             # Upload Apex code coverage data
             - name: 'Upload code coverage for Apex to Codecov.io'
+              if: github.actor != 'dependabot[bot]'
               uses: codecov/codecov-action@v1
               with:
                   flags: Apex
 
             # Housekeeping
             - name: 'Delete scratch org'
-              if: always()
+              if: github.actor != 'dependabot[bot]' && always()
               run: 'sfdx force:org:delete -p -u quiz-ci'
